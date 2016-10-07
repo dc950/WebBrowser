@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace WebBrowser
 {
@@ -75,7 +76,10 @@ namespace WebBrowser
         WebPageReference url;
         string title;
 
-        //public abstract void ConvertToJson();
+        public string ConvertToJson(){
+            var jsonString = JsonConvert.SerializeObject(this);
+            return jsonString;
+        }
     }
 
     class Bookmark : SavedUrl

@@ -19,6 +19,7 @@ namespace WebBrowser
         [Test]
         public void TestHistory(){
             Browser browser = Browser.Instance;
+
         }
 
         public void TestNewTab(){
