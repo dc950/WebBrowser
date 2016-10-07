@@ -33,7 +33,7 @@ namespace WebBrowser
             //setup initial tab?
         }
 
-        public Browser Instance {
+        public static Browser Instance {
             get {
                 if(browser==null)
                     browser = new Browser();
@@ -75,12 +75,12 @@ namespace WebBrowser
         WebPageReference url;
         string title;
 
-        public abstract void ConvertToJson();
+        //public abstract void ConvertToJson();
     }
 
     class Bookmark : SavedUrl
     {
-        List<WebPageReference> bookmarks;
+
     }
 
     class HistoryItem : SavedUrl
