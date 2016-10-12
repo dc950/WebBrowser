@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Windows.Forms;
@@ -13,45 +13,31 @@ namespace WebBrowser
         public List<Bookmark> Bookmarks { get; } = new List<Bookmark>();
         public GlobalHistory History { get; private set; }
         public MainWindow MainWindow { get; set; }
-        //GUI buttons and stuff will go here
         private static Browser _browser;
         public static Browser Instance => _browser ?? (_browser = new Browser());
 
-        private Browser()
-        {
+        private Browser() {
             History = GlobalHistory.GetGlobalHistory();
             //TODO get bookmarks
         }
 
-        public void AddItemToGlobalHistory(HistoryItem item)
-        {
-            History.Add(item);
-        }
-
-        public void SetActiveTab(Tab tab)
-        {
+        public void SetActiveTab(Tab tab) {
             ActiveTab = tab;
         }
 
-        public void OpenNewTab()
-        {
+        public void OpenNewTab() {
             var tab = Tab.NewTab();
             Tabs.Add(tab);
             ActiveTab = tab;
-            //MainWindow.Controls.Add(button);
         }
-
-        public void OpenLinkInNewTab(string url) { }
-
-        public void GoToLinkInCurrentTab(string url)
-        {
-            Contract.Requires(ActiveTab != null);
+        
+        public void GoToLinkInCurrentTab(string url) {
             var webPage = new WebPageReference(url);
             GoToLinkInCurrentTab(webPage);
         }
 
-        internal void GoToLinkInCurrentTab(WebPageReference webPage)
-        {
+        internal void GoToLinkInCurrentTab(WebPageReference webPage) {
+            Contract.Requires(ActiveTab != null);
             ActiveTab.LoadPage(webPage);
         }
     }

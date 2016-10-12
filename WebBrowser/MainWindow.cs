@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -14,45 +14,8 @@ namespace WebBrowser
         private HtmlPanel _currentHtmlPanel;
         private FlowLayoutPanel _sidePanel;
 
-        private enum SidePanelStatus
-        {
-            Bookmarks,
-            History,
-            None
-        }
-
+        private enum SidePanelStatus {Bookmarks, History, None}
         private SidePanelStatus _sidePanelStatus = SidePanelStatus.None;
-
-        public Control GetPanel() {
-            return TabPanel;
-        }
-
-        public void AddHtmlPanel(HtmlPanel htmlPanel) {
-            tableLayoutPanel1.Controls.Add(htmlPanel, 0, 2);
-            htmlPanel.LinkClicked += OnLinkClicked;
-        }
-
-        protected virtual void OnLinkClicked(object sender, HtmlLinkClickedEventArgs e) {
-            var baseUri = new Uri(_browser.ActiveTab.CurrentPage.Url);
-            var url = new Uri(baseUri, e.Link);
-            //has just been clicked so should be on current tab
-            Browser.Instance.GoToLinkInCurrentTab(url.AbsoluteUri);
-        }
-
-        //        public event EventHandler<HtmlLinkClickedEventArgs> LinkClicked;
-
-
-        public void GoToLink() {}
-
-        public void SetCurrentPanel(HtmlPanel panel) {
-            _currentHtmlPanel?.Hide();
-            _currentHtmlPanel = panel;
-            _currentHtmlPanel.Show();
-        }
-
-        public void SetUrlBar(WebPageReference webPage) {
-            UrlBar.Text = webPage != null ? webPage.Url : "http://www.";
-        }
 
         public MainWindow() {
             InitializeComponent();
@@ -74,16 +37,40 @@ namespace WebBrowser
             UrlBar.MinimumSize = new Size(100, 35);
         }
 
+        public Control GetPanel() { //TODO make property
+            return TabPanel;
+        }
+
+        public void AddContentPanel(Control contentPanel) {
+            tableLayoutPanel1.Controls.Add(contentPanel, 0, 2);
+            var htmlPanel = contentPanel as HtmlPanel;
+            if(htmlPanel != null)
+                htmlPanel.LinkClicked += OnLinkClicked;
+        }
+
+        protected virtual void OnLinkClicked(object sender, HtmlLinkClickedEventArgs e) {
+            var baseUri = new Uri(_browser.ActiveTab.CurrentPage.Url);
+            var url = new Uri(baseUri, e.Link);
+            //link has just been clicked so should base uri should be on the current tab
+            Browser.Instance.GoToLinkInCurrentTab(url.AbsoluteUri);
+        }
+        
+        public void SetCurrentPanel(HtmlPanel panel) {
+            _currentHtmlPanel?.Hide();
+            _currentHtmlPanel = panel;
+            _currentHtmlPanel.Show();
+        }
+
+        public void SetUrlBar(WebPageReference webPage) {
+            UrlBar.Text = webPage != null ? webPage.Url : "http://www.";
+        }
+
         public void LoadPageIntoContextWindowFromThread(string content, string css, Tab tab) {
-            //_context.Post(,null);
             //TODO possible to invoke this from tab?
             Invoke((MethodInvoker) delegate {
-                tab.HtmlPanel.Text = content;
-                if (css != "") {
-                    tab.HtmlPanel.BaseStylesheet = css;
-                }
-                // TODO: load the css in a string and set it here: 
-                //stab.HtmlPanel.BaseStylesheet = GetCss(content)s;
+                tab.MainPanel.SetContent(content);
+                if (css != "")
+                    tab.MainPanel.SetCss(css);
                 tab.SetTitle(content);
             });
         }
@@ -92,16 +79,12 @@ namespace WebBrowser
             panel.Text = content;
         }
 
-        private void bookmarksToolStripMenuItem_Click(object sender, EventArgs e) {}
-
-        private void settingsToolStripMenuItem_Click(object sender, EventArgs e) {}
-
         private void btnBack_Click(object sender, EventArgs e) {
             try {
                 _browser.ActiveTab.GoBack();
             }
             catch (InvalidOperationException) {
-                //Back has been pressed when there are no items.  Just do nothing...
+                //ignore
             }
         }
 
@@ -110,7 +93,7 @@ namespace WebBrowser
                 _browser.ActiveTab.GoForwards();
             }
             catch (InvalidOperationException) {
-                // do nothing
+                //ignore
             }
         }
 
@@ -126,6 +109,7 @@ namespace WebBrowser
 
 
         //TODO theese methods are very similar - can something smart be done here?
+        //TODO put into new class?
         private void btnFavourites_Click(object sender, EventArgs e) {
             switch (_sidePanelStatus) {
                 case SidePanelStatus.Bookmarks:
@@ -224,6 +208,132 @@ namespace WebBrowser
         private void btnFavourite_Click(object sender, EventArgs e) {
             var bookmark = new Bookmark(_browser.ActiveTab.CurrentPage, _browser.ActiveTab.Title);
             Bookmarks.GetBookmarks().AddBookmark(bookmark);
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnToggleHtml_Click(object sender, EventArgs e)
+        {
+            MainWindowPanelManager.Instance.ToggleMode();
+            if (MainWindowPanelManager.Instance.ActiveDisplayPanelMode == MainWindowPanelManager.DisplayPanelMode.Render)
+                btnToggleHtml.Text = "Show html source";
+            else
+                btnToggleHtml.Text = "Show rendered webpage";
+        }
+    }
+
+    //manages the global state of the main window
+    //TODO change to normal singleton
+    public class MainWindowPanelManager
+    {
+        private readonly List<MainWindowPanel> _mainWindowPanelListiners = new List<MainWindowPanel>();
+        public enum DisplayPanelMode { Source, Render }
+
+        public DisplayPanelMode ActiveDisplayPanelMode { get; private set; }
+        private static MainWindowPanelManager _mainWindowPanelManager;
+
+        public static MainWindowPanelManager Instance => _mainWindowPanelManager ?? (_mainWindowPanelManager = new MainWindowPanelManager());
+
+        private MainWindowPanelManager() {
+            ActiveDisplayPanelMode = DisplayPanelMode.Render;
+        }
+
+        public void ToggleMode() {
+            switch (ActiveDisplayPanelMode) {
+                case DisplayPanelMode.Render:
+                    SetMode(DisplayPanelMode.Source);
+                    break;
+                case DisplayPanelMode.Source:
+                    SetMode(DisplayPanelMode.Render);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        public void SetMode(DisplayPanelMode mode) {
+            ActiveDisplayPanelMode = mode;
+            foreach (var window in _mainWindowPanelListiners)
+                window.ChangeMode(mode);
+        }
+
+        public void Subscribe(MainWindowPanel panel) {
+            _mainWindowPanelListiners.Add(panel);
+        }
+    }
+
+    public class MainWindowPanel
+    {
+        private readonly HtmlPanel _htmlPanel;
+        readonly RichTextBox _sourceBox;
+        public bool IsActive { get; set; }
+
+        public MainWindowPanel() {
+            _htmlPanel = new HtmlPanel {
+                Dock = DockStyle.Fill
+            };
+            _htmlPanel.Hide();
+            Browser.Instance.MainWindow.AddContentPanel(_htmlPanel);
+            _sourceBox = new RichTextBox {
+                ReadOnly = true,
+                Dock = DockStyle.Fill
+            };
+            _sourceBox.Hide();
+            Browser.Instance.MainWindow.AddContentPanel(_sourceBox);
+            MainWindowPanelManager.Instance.Subscribe(this);
+        }
+
+        public void SetContent(string content) {
+            _htmlPanel.Text = content;
+            _sourceBox.Text = content;
+        }
+
+        public void SetCss(string css) {
+            _htmlPanel.BaseStylesheet = css;
+        }
+
+        public void ChangeMode(MainWindowPanelManager.DisplayPanelMode mode) {
+            if (mode == MainWindowPanelManager.DisplayPanelMode.Source)
+                ActivateSource();
+            else
+                ActivateRender();
+            
+        }
+
+        public void Activate() {
+            IsActive = true;
+            switch (MainWindowPanelManager.Instance.ActiveDisplayPanelMode) {
+                case MainWindowPanelManager.DisplayPanelMode.Render:
+                    _htmlPanel.Show();
+                    break;
+                case MainWindowPanelManager.DisplayPanelMode.Source:
+                    _sourceBox.Show();
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+        }
+
+        public void Disable() {
+            IsActive = false;
+            _htmlPanel.Hide();
+            _sourceBox.Hide();
+        }
+
+        private void ActivateSource() {
+            _htmlPanel.Hide();
+            if (IsActive)
+                _sourceBox.Show();
+        }
+
+        private void ActivateRender() {
+            _sourceBox.Hide();
+            if (IsActive)
+                _htmlPanel.Show();
         }
     }
 }
