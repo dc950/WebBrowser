@@ -8,26 +8,24 @@ namespace WebBrowser
     [TestFixture]
     public class Tests
     {
-        [Test]
-        public void TestHttpRequest()
+        private void Setup()
         {
-            Request webRequester = new Request("http://www.google.com");
-            var status = ((HttpWebResponse)webRequester.Response).StatusDescription;
-            Assert.AreEqual("OK",status);
+            var mainWindow = new MainWindow();
         }
 
         [Test]
-        public void TestHistory(){
-            Browser browser = Browser.Instance;
-
+        public void TestBrowserInstantiation()
+        {
+            var mainWindow = new MainWindow();
+            Assert.True(Browser.Instance.MainWindow != null);
         }
 
+        [Test]
         public void TestNewTab(){
-            
-        }
-
-        public void TestBookmarks(){
-            
+            Setup();
+            Browser.Instance.OpenNewTab();
+            var tab = Browser.Instance.ActiveTab;
+            Assert.True(tab != null);
         }
     }
 }
