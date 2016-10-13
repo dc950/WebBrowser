@@ -12,10 +12,12 @@ namespace WebBrowser
     {
         private readonly Browser _browser;
         private HtmlPanel _currentHtmlPanel;
-        private FlowLayoutPanel _sidePanel;
+        private TableLayoutPanel _sidePanel;
 
         private enum SidePanelStatus {Bookmarks, History, None}
         private SidePanelStatus _sidePanelStatus = SidePanelStatus.None;
+
+        public FlowLayoutPanel TabFlowPanel => TabPanel;
 
         public MainWindow() {
             InitializeComponent();
@@ -109,7 +111,7 @@ namespace WebBrowser
 
 
         //TODO theese methods are very similar - can something smart be done here?
-        //TODO put into new class?
+        //TODO put into new class?  inherit from an abstract / super class?
         private void btnFavourites_Click(object sender, EventArgs e) {
             switch (_sidePanelStatus) {
                 case SidePanelStatus.Bookmarks:
@@ -157,40 +159,57 @@ namespace WebBrowser
         }
 
         private void ShowSidePanel(List<SavedUrl> items) {
-            var panel = new FlowLayoutPanel {
-                Dock = DockStyle.Right,
-                FlowDirection = FlowDirection.TopDown
-            };
+            
 
+            TableLayoutPanel table = new TableLayoutPanel();
+            table.Dock = DockStyle.Right;
+            table.RowCount = 2;
+            table.ColumnCount = 1;
             //get the elements needed and add them to the panel
-            SetupSidePanelCloseButton(panel);
-            SetupSidePanelButtons(items, panel);
+            table.Controls.Add(SetupSidePanelCloseButton(), 0, 0);
+            table.Controls.Add(SetupSidePanelButtons(items),0,1);
 
-            Controls.Add(panel); //add panel to form
-            _sidePanel = panel; //update current side panel
+            Controls.Add(table); //add panel to form
+            _sidePanel = table; //update current side panel
         }
 
-        private void SetupSidePanelCloseButton(FlowLayoutPanel panel) {
+        private Button SetupSidePanelCloseButton() {
             var close = new Button {
-                Text = "Close History",
+                Text = "Close",
                 Dock = DockStyle.Bottom
             };
             close.Click += delegate { CloseSidePanel(); };
-            panel.Controls.Add(close);
+            return close;
         }
 
-        private void SetupSidePanelButtons(List<SavedUrl> items, FlowLayoutPanel panel) {
+        private FlowLayoutPanel SetupSidePanelButtons(List<SavedUrl> items) {
+            var panel = SetupSidePanelPanel();
             foreach (var item in items) {
-                var button = new Button {
-                    //TODO some better abstraction?
-                    Text = item.Title,
-                    Width = 200
-                };
-                if (item is HistoryItem)
-                    button.Text += " | " + (item as HistoryItem).Time;
-                button.Click += delegate { GoToHistoryItem(item.WebPage); };
+                var button = SetupSidePanelContentButton(item);
                 panel.Controls.Add(button);
             }
+            return panel;
+        }
+
+        private static FlowLayoutPanel SetupSidePanelPanel() {
+            var panel = new FlowLayoutPanel {
+                Dock = DockStyle.Right,
+                FlowDirection = FlowDirection.TopDown,
+                AutoScroll = true,
+                WrapContents = false,
+            };
+            return panel;
+        }
+
+        private Button SetupSidePanelContentButton(SavedUrl item) {
+            var button = new Button {
+                Text = item.Title,
+                Width = 200
+            };
+            if (item is HistoryItem)
+                button.Text += " | " + (item as HistoryItem).Time;
+            button.Click += delegate { GoToHistoryItem(item.WebPage); };
+            return button;
         }
 
         private void GoToHistoryItem(WebPageReference reference) {
@@ -212,7 +231,7 @@ namespace WebBrowser
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
-
+            Browser.Instance.ActiveTab.LoadPage(Browser.Instance.ActiveTab.CurrentPage);
         }
 
         private void btnToggleHtml_Click(object sender, EventArgs e)
@@ -223,10 +242,44 @@ namespace WebBrowser
             else
                 btnToggleHtml.Text = "Show rendered webpage";
         }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData) {
+
+            if (UrlBar.Focused) { return base.ProcessCmdKey(ref msg, keyData); }
+            switch (keyData) {
+                case Keys.Alt | Keys.Left:
+                    btnBack_Click(null, null);
+                    break;
+                case Keys.Alt | Keys.Right:
+                    btnForwards_Click(null, null);
+                    break;
+                case Keys.F5:
+                    btnRefresh_Click(null, null);
+                    break;
+                case Keys.Control | Keys.H:
+                    btnHistory_Click(null, null);
+                    break;
+                case Keys.Control | Keys.B:
+                    break;
+                case Keys.Control | Keys.T:
+                    NewTab_Click(null, null);
+                    break;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void CheckEnterKeyPress(object sender, KeyPressEventArgs e) {
+            if (e.KeyChar == (char) Keys.Return)
+                btnGo_Click(null, null);
+        }
+
+        private void UrlBar_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 
     //manages the global state of the main window
-    //TODO change to normal singleton
     public class MainWindowPanelManager
     {
         private readonly List<MainWindowPanel> _mainWindowPanelListiners = new List<MainWindowPanel>();
@@ -335,5 +388,6 @@ namespace WebBrowser
             if (IsActive)
                 _htmlPanel.Show();
         }
+
     }
 }

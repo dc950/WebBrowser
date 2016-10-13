@@ -19,20 +19,33 @@ namespace WebBrowser
         private Thread _thread;
         private string _content;
         public string Title { get; private set; }
-        //public HtmlPanel HtmlPanel { get; } = new HtmlPanel();
         public MainWindowPanel MainPanel { get; } = new MainWindowPanel();
 
         private readonly Button _button;
+        private readonly FlowLayoutPanel _tabPanel;
         private string _css;
 
         private Tab() {
-            
+            _tabPanel = new FlowLayoutPanel();
+            _tabPanel.FlowDirection = FlowDirection.LeftToRight;
+            _tabPanel.AutoSize = true;
+            var closeButton = new Button {Text = "X"};
+            closeButton.Click += delegate { CloseTab(); };
+            closeButton.Padding = Padding.Empty;
+            closeButton.Margin = Padding.Empty;
+            closeButton.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            closeButton.Size = new Size(15, closeButton.Size.Height);
+
             _button = new Button();
             _button.Click += delegate { ActivateTab(); };
             var panel = Browser.Instance.MainWindow.GetPanel();
             _button.Text = "New Tab";
             _button.BackColor = Color.Silver;
-            panel.Controls.Add(_button);
+            _button.Padding = Padding.Empty;
+            _button.Margin = Padding.Empty;
+            _tabPanel.Controls.Add(_button);
+            _tabPanel.Controls.Add(closeButton);
+            panel.Controls.Add(_tabPanel);
             ActivateTab();
         }
 
@@ -65,7 +78,13 @@ namespace WebBrowser
             _button.BackColor = Color.CornflowerBlue;
         }
 
-        public void CloseTab() {}
+        public void CloseTab() {
+            this.MainPanel.Disable();
+            _content = null;
+            _tabPanel.Controls.Clear();
+            Browser.Instance.Tabs.Remove(this);
+            Browser.Instance.MainWindow.TabFlowPanel.Controls.Remove(_tabPanel);
+        }
 
         public static Tab NewTab() {
             var tab = new Tab();

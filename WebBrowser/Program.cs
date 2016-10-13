@@ -12,12 +12,11 @@ using System.Windows.Forms;
 //If favourites is empty the close button does not appear
 //Don't think css is working
 //TODO essential features
-//refresh button
-//close tabs
-//shortcuts
+//menus
+//home page
 //TODO extra features
 //unit tests
-//Tidy/abstract more code - use more design patterns (factory?)
+//Tidy/abstract more code - more classes
 //More contracts and try - catches
 //Options? just some singleton/static class with a bunch of settings that can be configured
 
@@ -132,7 +131,7 @@ namespace WebBrowser
             Time = DateTime.Now;
         }
     }
-
+    //TODO shold these classes inherit instead of referncing
     public class GlobalHistory
     {
         private readonly string _historyFileLocation =

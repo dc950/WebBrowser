@@ -27,11 +27,13 @@ namespace WebBrowser
         }
 
         public void TestLoadingPage() {
-            
+            Setup();
+            Browser.Instance.OpenNewTab();
+            Browser.Instance.GoToLinkInCurrentTab("http://www.google.com");
         }
 
         public void TestSavingAndLoadingBookmarks() {
-            
+            //TODO will need some options first
         }
 
         public void TestSavingAndLoadingHistory() {
