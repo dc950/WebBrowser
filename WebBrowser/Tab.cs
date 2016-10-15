@@ -16,7 +16,6 @@ namespace WebBrowser
     {
         public LocalHistory TabHistory { get; } = new LocalHistory();
         public WebPageReference CurrentPage { get; private set; }
-        private Thread _thread;
         private string _content;
         public string Title { get; private set; }
         public MainWindowPanel MainPanel { get; } = new MainWindowPanel();
@@ -25,7 +24,7 @@ namespace WebBrowser
         private readonly FlowLayoutPanel _tabPanel;
         private string _css;
 
-        private Tab() {
+        public Tab() {
             _tabPanel = new FlowLayoutPanel();
             _tabPanel.FlowDirection = FlowDirection.LeftToRight;
             _tabPanel.AutoSize = true;
@@ -86,44 +85,6 @@ namespace WebBrowser
             Browser.Instance.MainWindow.TabFlowPanel.Controls.Remove(_tabPanel);
         }
 
-        public static Tab NewTab() {
-            var tab = new Tab();
-            return tab;
-        }
-
-        public void LoadPage(WebPageReference webPage) {
-            //TODO move all multithreading and http stuff to new class?
-            Browser.Instance.MainWindow.SetUrlBar(webPage);
-            if (_thread != null && _thread.IsAlive) {
-                _thread.Abort();
-            }
-            ThreadStart loadPageThreadStart = delegate { TryLoadPageThread(webPage); };
-            _thread = new Thread(loadPageThreadStart);
-            _thread.Start();
-        }
-
-        private void TryLoadPageThread(WebPageReference webPage) {
-            try {
-                LoadPageThread(webPage);
-            }
-            catch (WebException webExcp) {
-                ProcessWebException(webExcp);
-            }
-            catch (Exception e) {
-                _content = "Failed to load page: " + e.Message;
-                if (Browser.Instance.ActiveTab == this) DisplayWebPage();
-            }
-        }
-
-        private void LoadPageThread(WebPageReference webPage) {
-            _content = GetPageContentAsString(webPage);
-            _css = GetCss(_content, webPage);
-            if (Browser.Instance.ActiveTab == this)
-                DisplayWebPage();
-            UpdateHistories(webPage);
-            CurrentPage = webPage;
-        }
-
         private void DisplayWebPage() {
             Browser.Instance.MainWindow.LoadPageIntoContextWindowFromThread(_content, _css, this);
         }
@@ -179,17 +140,45 @@ namespace WebBrowser
             }
         }
 
-
+        public void ActivateNewPageContent(string content, WebPageReference webPage) {
+            if (CurrentPage != webPage) return; //new page load has begun since -- ignore this
+            _css = GetCss(content, webPage);
+            if (Browser.Instance.ActiveTab == this)
+                DisplayWebPage();
+            UpdateHistories(webPage);
+            CurrentPage = webPage;
+        }
         //TODO move web stuff to new class
-        private static string GetPageContentAsString(WebPageReference webPage) {
-            //Create web request and get responseStream
-            var webRequest = WebRequest.Create(webPage.Url);
-            var response = webRequest.GetResponse();
-            var responseStream = response.GetResponseStream();
-            //Get the html as a string from the responseStream
-            var steamReader = new StreamReader(responseStream);
-            var content = steamReader.ReadToEnd();
-            return content;
+    }
+
+    public class WebPageContentRetriever
+    {
+        private Thread _thread;
+        private readonly Tab _tab;
+        public WebPageContentRetriever(Tab tab) {
+            _tab = tab;
+        }
+
+
+        public void LoadPage(WebPageReference webPage) {
+            //TODO move all multithreading and http stuff to new class?
+            Browser.Instance.MainWindow.SetUrlBar(webPage);
+            if (_thread != null && _thread.IsAlive) {
+                _thread.Abort();
+            }
+            var webPageLoader = new WebPageLoader(_tab);
+            ThreadStart loadPageThreadStart = delegate { webPageLoader.LoadPageThread(webPage); };
+            _thread = new Thread(loadPageThreadStart);
+            _thread.Start();
+        }
+    }
+
+    public class WebPageLoader
+    {
+        private readonly Tab _tab;
+
+        public WebPageLoader(Tab tab) {
+            _tab = tab;
         }
 
         private void ProcessWebException(WebException webExcp) {
@@ -199,8 +188,33 @@ namespace WebBrowser
             var response = (HttpWebResponse) webExcp.Response;
             var statusCode = response.StatusCode;
             var content = statusCode.ToString();
-            Browser.Instance.MainWindow.LoadPageIntoContextWindowFromThread(content, "", this);
-                //TODO create overload with no css?
+            Browser.Instance.MainWindow.LoadPageIntoContextWindowFromThread(content, "", _tab);
+                //TODO move this to main tab?
+            //TODO create overload with no css?
+        }
+
+        public void LoadPageThread(WebPageReference webPage) {
+            try {
+                TryLoadPageThread(webPage);
+            }
+            catch (WebException webExcp) {
+                ProcessWebException(webExcp);
+            }
+            catch (Exception e) {
+                var content = "Failed to load page: " + e.Message;
+                _tab.ActivateNewPageContent(content, webPage);
+            }
+        }
+
+        private void TryLoadPageThread(WebPageReference webPage) {
+            //Create web request and get responseStream
+            var webRequest = WebRequest.Create(webPage.Url);
+            var response = webRequest.GetResponse();
+            var responseStream = response.GetResponseStream();
+            //Get the html as a string from the responseStream
+            var steamReader = new StreamReader(responseStream);
+            var content = steamReader.ReadToEnd();
+            _tab.ActivateNewPageContent(content, webPage);
         }
     }
 }

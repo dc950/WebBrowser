@@ -18,7 +18,7 @@ namespace WebBrowser
 
         private Browser() {
             History = GlobalHistory.GetGlobalHistory();
-            //TODO get bookmarks
+            //TODO move getting bookmarks to here
         }
 
         public void SetActiveTab(Tab tab) {
@@ -26,7 +26,7 @@ namespace WebBrowser
         }
 
         public void OpenNewTab() {
-            var tab = Tab.NewTab();
+            var tab = new Tab();
             Tabs.Add(tab);
             ActiveTab = tab;
         }
