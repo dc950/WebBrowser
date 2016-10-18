@@ -142,8 +142,10 @@ namespace WebBrowser
         private Bookmarks() {
             _dataStorer = new DataStorer<List<Bookmark>>(_bookmarksFileLocation);
             BookmarkList = _dataStorer.LoadData();
-            if (BookmarkList == null)
-                _dataStorer.SetNewItem(new List<Bookmark>());
+            if (BookmarkList == null) {
+                BookmarkList = new List<Bookmark>();
+                _dataStorer.SetNewItem(BookmarkList);
+            }
         }
 
         public void AddBookmark(Bookmark bookmark) {
@@ -188,7 +190,10 @@ namespace WebBrowser
             _dataStorer = new DataStorer<List<HistoryItem>>(_historyFileLocation);
             HistoryItems = _dataStorer.LoadData();
             if (HistoryItems == null)
-                _dataStorer.SetNewItem(new List<HistoryItem>());
+            {
+                HistoryItems = new List<HistoryItem>();
+                _dataStorer.SetNewItem(HistoryItems);
+            }
         }
 
         public void Add(HistoryItem item) {
