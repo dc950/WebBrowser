@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -14,7 +15,13 @@ namespace WebBrowser
         private HtmlPanel _currentHtmlPanel;
         private TableLayoutPanel _sidePanel;
 
-        private enum SidePanelStatus {Bookmarks, History, None}
+        private enum SidePanelStatus
+        {
+            Bookmarks,
+            History,
+            None
+        }
+
         private SidePanelStatus _sidePanelStatus = SidePanelStatus.None;
 
         public FlowLayoutPanel TabFlowPanel => TabPanel;
@@ -39,14 +46,15 @@ namespace WebBrowser
             UrlBar.MinimumSize = new Size(100, 35);
         }
 
-        public Control GetPanel() { //TODO make property
+        public Control GetPanel() {
+            //TODO make property
             return TabPanel;
         }
 
         public void AddContentPanel(Control contentPanel) {
             tableLayoutPanel1.Controls.Add(contentPanel, 0, 2);
             var htmlPanel = contentPanel as HtmlPanel;
-            if(htmlPanel != null)
+            if (htmlPanel != null)
                 htmlPanel.LinkClicked += OnLinkClicked;
         }
 
@@ -56,8 +64,9 @@ namespace WebBrowser
             //link has just been clicked so should base uri should be on the current tab
             Browser.Instance.GoToLinkInCurrentTab(url.AbsoluteUri);
         }
-        
+
         public void SetCurrentPanel(HtmlPanel panel) {
+            Contract.Requires(panel != null);
             _currentHtmlPanel?.Hide();
             _currentHtmlPanel = panel;
             _currentHtmlPanel.Show();
@@ -70,14 +79,16 @@ namespace WebBrowser
         public void LoadPageIntoContextWindowFromThread(string content, string css, Tab tab) {
             //TODO possible to invoke this from tab?
             Invoke((MethodInvoker) delegate {
+                if (content == null) content = "";
+                tab.SetTitle(content);
                 tab.MainPanel.SetContent(content);
                 if (css != "")
                     tab.MainPanel.SetCss(css);
-                tab.SetTitle(content);
             });
         }
 
         public void LoadPageIntoContentWindow(string content, HtmlPanel panel) {
+            Contract.Requires(panel != null);
             panel.Text = content;
         }
 
@@ -110,8 +121,7 @@ namespace WebBrowser
         private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e) {}
 
 
-        //TODO theese methods are very similar - can something smart be done here?
-        //TODO put into new class?  inherit from an abstract / super class?
+        //TODO put all side panel stuff in new class
         private void btnFavourites_Click(object sender, EventArgs e) {
             switch (_sidePanelStatus) {
                 case SidePanelStatus.Bookmarks:
@@ -147,27 +157,28 @@ namespace WebBrowser
         }
 
         private void ShowBookMarkPanel() {
-            var bookmarks = Bookmarks.GetBookmarks().BookmarkList;
+            var bookmarks = Bookmarks.Instance.BookmarkList;
             _sidePanelStatus = SidePanelStatus.Bookmarks;
             ShowSidePanel(bookmarks.Cast<SavedUrl>().ToList());
         }
 
         private void ShowHistoryPanel() {
-            var historyItems = GlobalHistory.GetGlobalHistory().HistoryItems;
+            var historyItems = GlobalHistory.Instance.HistoryItems;
             _sidePanelStatus = SidePanelStatus.History;
             ShowSidePanel(historyItems.Cast<SavedUrl>().ToList());
         }
 
         private void ShowSidePanel(List<SavedUrl> items) {
-            
-
-            TableLayoutPanel table = new TableLayoutPanel();
-            table.Dock = DockStyle.Right;
-            table.RowCount = 2;
-            table.ColumnCount = 1;
+            var table = new TableLayoutPanel {
+                Dock = DockStyle.Right,
+                RowCount = 2,
+                ColumnCount = 1,
+                Width = 300
+                
+            };
             //get the elements needed and add them to the panel
             table.Controls.Add(SetupSidePanelCloseButton(), 0, 0);
-            table.Controls.Add(SetupSidePanelButtons(items),0,1);
+            table.Controls.Add(SetupSidePanelButtons(items), 0, 1);
 
             Controls.Add(table); //add panel to form
             _sidePanel = table; //update current side panel
@@ -184,9 +195,22 @@ namespace WebBrowser
 
         private FlowLayoutPanel SetupSidePanelButtons(List<SavedUrl> items) {
             var panel = SetupSidePanelPanel();
+            panel.Width = 300;
             foreach (var item in items) {
+                var innerPannel = new FlowLayoutPanel {
+                    FlowDirection = FlowDirection.LeftToRight,
+                    Width = 300
+                };
                 var button = SetupSidePanelContentButton(item);
-                panel.Controls.Add(button);
+                innerPannel.Height = button.Height+2;
+                var removeButton = new Button {Text = "X"};
+                if(item is HistoryItem)
+                    removeButton.Click += delegate { GlobalHistory.Instance.Remove(item as HistoryItem); panel.Controls.Remove(innerPannel); };
+                else if(item is Bookmark)
+                    removeButton.Click += delegate { Bookmarks.Instance.Remove(item as Bookmark); panel.Controls.Remove(innerPannel); };
+                innerPannel.Controls.Add(button);
+                innerPannel.Controls.Add(removeButton);
+                panel.Controls.Add(innerPannel);
             }
             return panel;
         }
@@ -206,8 +230,9 @@ namespace WebBrowser
                 Text = item.Title,
                 Width = 200
             };
-            if (item is HistoryItem)
-                button.Text += " | " + (item as HistoryItem).Time;
+            var historyItem = item as HistoryItem;
+            if (historyItem != null)
+                button.Text += " | " + historyItem.Time;
             button.Click += delegate { GoToHistoryItem(item.WebPage); };
             return button;
         }
@@ -226,26 +251,19 @@ namespace WebBrowser
 
         private void btnFavourite_Click(object sender, EventArgs e) {
             var bookmark = new Bookmark(_browser.ActiveTab.CurrentPage, _browser.ActiveTab.Title);
-            Bookmarks.GetBookmarks().AddBookmark(bookmark);
+            Bookmarks.Instance.AddBookmark(bookmark);
         }
 
-        private void btnRefresh_Click(object sender, EventArgs e)
-        {
-            Browser.Instance.ActiveTab.LoadPage(Browser.Instance.ActiveTab.CurrentPage);
+        private void btnRefresh_Click(object sender, EventArgs e) {
+            Browser.Instance.ActiveTab.LoadNewPage(Browser.Instance.ActiveTab.CurrentPage);
         }
 
-        private void btnToggleHtml_Click(object sender, EventArgs e)
-        {
-            MainWindowPanelManager.Instance.ToggleMode();
-            if (MainWindowPanelManager.Instance.ActiveDisplayPanelMode == MainWindowPanelManager.DisplayPanelMode.Render)
-                btnToggleHtml.Text = "Show html source";
-            else
-                btnToggleHtml.Text = "Show rendered webpage";
+        private void btnToggleHtml_Click(object sender, EventArgs e) {
+            MainPanelManager.Instance.ToggleMode();
+            btnToggleHtml.Text = MainPanelManager.Instance.ActiveDisplayPanelMode == MainPanelManager.DisplayPanelMode.Render ? "Show html source" : "Show rendered webpage";
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData) {
-
-            if (UrlBar.Focused) { return base.ProcessCmdKey(ref msg, keyData); }
             switch (keyData) {
                 case Keys.Alt | Keys.Left:
                     btnBack_Click(null, null);
@@ -273,121 +291,41 @@ namespace WebBrowser
                 btnGo_Click(null, null);
         }
 
-        private void UrlBar_TextChanged(object sender, EventArgs e)
+        private void UrlBar_TextChanged(object sender, EventArgs e) {}
+
+        private void backToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btnBack_Click(sender, e);
+        }
+
+        private void forwardsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btnForwards_Click(sender, e);
+        }
+
+        private void historyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btnHistory_Click(sender, e);
+        }
+
+        private void favouritesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btnFavourites_Click(sender, e);
+        }
+
+        private void toggleSourceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            btnToggleHtml_Click(sender, e);
+        }
+
+        private void homeToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
         }
-    }
 
-    //manages the global state of the main window
-    public class MainWindowPanelManager
-    {
-        private readonly List<MainWindowPanel> _mainWindowPanelListiners = new List<MainWindowPanel>();
-        public enum DisplayPanelMode { Source, Render }
-
-        public DisplayPanelMode ActiveDisplayPanelMode { get; private set; }
-        private static MainWindowPanelManager _mainWindowPanelManager;
-
-        public static MainWindowPanelManager Instance => _mainWindowPanelManager ?? (_mainWindowPanelManager = new MainWindowPanelManager());
-
-        private MainWindowPanelManager() {
-            ActiveDisplayPanelMode = DisplayPanelMode.Render;
+        public void SetNavButtons(bool forwardActive, bool backActive) {
+            btnForwards.Enabled = forwardActive;
+            btnBack.Enabled = backActive;
         }
-
-        public void ToggleMode() {
-            switch (ActiveDisplayPanelMode) {
-                case DisplayPanelMode.Render:
-                    SetMode(DisplayPanelMode.Source);
-                    break;
-                case DisplayPanelMode.Source:
-                    SetMode(DisplayPanelMode.Render);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        public void SetMode(DisplayPanelMode mode) {
-            ActiveDisplayPanelMode = mode;
-            foreach (var window in _mainWindowPanelListiners)
-                window.ChangeMode(mode);
-        }
-
-        public void Subscribe(MainWindowPanel panel) {
-            _mainWindowPanelListiners.Add(panel);
-        }
-    }
-
-    public class MainWindowPanel
-    {
-        private readonly HtmlPanel _htmlPanel;
-        readonly RichTextBox _sourceBox;
-        public bool IsActive { get; set; }
-
-        public MainWindowPanel() {
-            _htmlPanel = new HtmlPanel {
-                Dock = DockStyle.Fill
-            };
-            _htmlPanel.Hide();
-            Browser.Instance.MainWindow.AddContentPanel(_htmlPanel);
-            _sourceBox = new RichTextBox {
-                ReadOnly = true,
-                Dock = DockStyle.Fill
-            };
-            _sourceBox.Hide();
-            Browser.Instance.MainWindow.AddContentPanel(_sourceBox);
-            MainWindowPanelManager.Instance.Subscribe(this);
-        }
-
-        public void SetContent(string content) {
-            _htmlPanel.Text = content;
-            _sourceBox.Text = content;
-        }
-
-        public void SetCss(string css) {
-            _htmlPanel.BaseStylesheet = css;
-        }
-
-        public void ChangeMode(MainWindowPanelManager.DisplayPanelMode mode) {
-            if (mode == MainWindowPanelManager.DisplayPanelMode.Source)
-                ActivateSource();
-            else
-                ActivateRender();
-            
-        }
-
-        public void Activate() {
-            IsActive = true;
-            switch (MainWindowPanelManager.Instance.ActiveDisplayPanelMode) {
-                case MainWindowPanelManager.DisplayPanelMode.Render:
-                    _htmlPanel.Show();
-                    break;
-                case MainWindowPanelManager.DisplayPanelMode.Source:
-                    _sourceBox.Show();
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-        }
-
-        public void Disable() {
-            IsActive = false;
-            _htmlPanel.Hide();
-            _sourceBox.Hide();
-        }
-
-        private void ActivateSource() {
-            _htmlPanel.Hide();
-            if (IsActive)
-                _sourceBox.Show();
-        }
-
-        private void ActivateRender() {
-            _sourceBox.Hide();
-            if (IsActive)
-                _htmlPanel.Show();
-        }
-
     }
 }

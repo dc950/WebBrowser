@@ -41,7 +41,6 @@ namespace WebBrowser
         }
 
         public void TestForwardsAndBackNavigation() {
-            
         }
     }
 }

@@ -17,7 +17,7 @@ namespace WebBrowser
         public static Browser Instance => _browser ?? (_browser = new Browser());
 
         private Browser() {
-            History = GlobalHistory.GetGlobalHistory();
+            History = GlobalHistory.Instance;
             //TODO move getting bookmarks to here
         }
 
@@ -38,7 +38,7 @@ namespace WebBrowser
 
         internal void GoToLinkInCurrentTab(WebPageReference webPage) {
             Contract.Requires(ActiveTab != null);
-            ActiveTab.LoadPage(webPage);
+            ActiveTab.LoadNewPage(webPage);
         }
     }
 }

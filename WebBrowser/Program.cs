@@ -7,13 +7,13 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
 
 //TODO bugs:
-//when loading a page after going back, the current page is added to back.
-//sometimes title refers to old page (due to no title being found and CurrentPage not updated yet?)
 //If favourites is empty the close button does not appear
-//Don't think css is working
+//Don't think css is working - test on simple example on uni server
+//If favourite is added while window open, it will not be added to the window
 //TODO essential features
 //menus
 //home page
+//make nicer - less buttons
 //TODO extra features
 //unit tests
 //Tidy/abstract more code - more classes
@@ -24,6 +24,7 @@ namespace WebBrowser
 {
     class MainClass
     {
+        [STAThread]
         public static void Main() {
             var mainWindow = new MainWindow();
             Application.Run(mainWindow);
@@ -99,19 +100,20 @@ namespace WebBrowser
         public List<Bookmark> BookmarkList { get; }
         private readonly DataStorer<Bookmark> _dataStorer;
         private static Bookmarks _instance;
+        public static Bookmarks Instance => _instance ?? (_instance = new Bookmarks());
 
         private Bookmarks() {
             _dataStorer = new DataStorer<Bookmark>(_bookmarksFileLocation);
             BookmarkList = _dataStorer.LoadData();
         }
 
-        //TODO convert to propery (also do it in GlobalHistory)
-        public static Bookmarks GetBookmarks() {
-            return _instance ?? (_instance = new Bookmarks());
-        }
-
         public void AddBookmark(Bookmark bookmark) {
             BookmarkList.Add(bookmark);
+            _dataStorer.SaveData();
+        }
+
+        public void Remove(Bookmark bookmark) {
+            BookmarkList.Remove(bookmark);
             _dataStorer.SaveData();
         }
     }
@@ -141,14 +143,11 @@ namespace WebBrowser
         public List<HistoryItem> HistoryItems { get; }
         private static GlobalHistory _globalHistory;
         private readonly DataStorer<HistoryItem> _dataStorer;
+        public static GlobalHistory Instance => _globalHistory ?? (_globalHistory = new GlobalHistory());
 
         private GlobalHistory() {
             _dataStorer = new DataStorer<HistoryItem>(_historyFileLocation);
             HistoryItems = _dataStorer.LoadData();
-        }
-
-        public static GlobalHistory GetGlobalHistory() {
-            return _globalHistory ?? (_globalHistory = new GlobalHistory());
         }
 
         public void Add(HistoryItem item) {
@@ -158,6 +157,7 @@ namespace WebBrowser
 
         public void Remove(HistoryItem item) {
             HistoryItems.Remove(item);
+            SaveHistory();
         }
 
         public void SaveHistory() {
@@ -170,14 +170,14 @@ namespace WebBrowser
         public readonly Stack<HistoryItem> Back = new Stack<HistoryItem>();
         public Stack<HistoryItem> Forwards = new Stack<HistoryItem>();
 
-        public HistoryItem GoBack(WebPageReference currentPage, string title) {
-            Forwards.Push(new HistoryItem(currentPage, title));
+        public HistoryItem GoBack(HistoryItem currentItem) {
+            Forwards.Push(currentItem);
             return Back.Pop();
         }
 
-        public HistoryItem GoForwards(WebPageReference currentPage, string title) {
+        public HistoryItem GoForwards(HistoryItem currentItem) {
             Contract.Requires(Forwards.Count > 0);
-            Back.Push(new HistoryItem(currentPage, title));
+            Back.Push(currentItem);
             return Forwards.Pop();
         }
 
@@ -185,8 +185,8 @@ namespace WebBrowser
             Forwards = new Stack<HistoryItem>();
         }
 
-        public void AddBack(WebPageReference webPage) {
-            Back.Push(new HistoryItem(webPage, "title"));
+        public void AddBack(HistoryItem historyItem) {
+           Back.Push(historyItem); 
         }
     }
 }
