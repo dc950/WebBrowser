@@ -7,17 +7,17 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
 
 //TODO bugs:
-//If favourites is empty the close button does not appear
 //Don't think css is working - test on simple example on uni server
 //If favourite is added while window open, it will not be added to the window
 //back messes up sometimes
 //TODO essential features
 //editing 
 //TODO extra features
-//unit tests
-//Tidy/abstract more code - more classes
-//More contracts and try - catches
 //Options? just some singleton/static class with a bunch of settings that can be configured
+//TODO code improvements
+//unit tests
+//Tidy/abstract more code - more classes (side panel, history/bookmarks)
+//More contracts and try - catches
 
 namespace WebBrowser
 {
@@ -174,7 +174,7 @@ namespace WebBrowser
             Time = DateTime.Now;
         }
     }
-    //TODO shold these classes inherit instead of referncing
+
     public class GlobalHistory
     {
         private readonly string _historyFileLocation =
