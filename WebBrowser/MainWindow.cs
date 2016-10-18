@@ -39,6 +39,8 @@ namespace WebBrowser
             _browser = Browser.Instance;
             _browser.MainWindow = this;
             _browser.OpenNewTab();
+            if(_browser.HomePage != null)
+                _browser.GoToLinkInCurrentTab(_browser.HomePage.WebPage);
 
             //fix issues with textbox height
             UrlBar.Height = 35;
@@ -320,12 +322,18 @@ namespace WebBrowser
 
         private void homeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            if(Browser.Instance.HomePage != null)
+                Browser.Instance.ActiveTab.LoadNewPage(Browser.Instance.HomePage.WebPage);
         }
 
         public void SetNavButtons(bool forwardActive, bool backActive) {
             btnForwards.Enabled = forwardActive;
             btnBack.Enabled = backActive;
+        }
+
+        private void setCurrentPageAsHomeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Browser.Instance.SetHomePage(Browser.Instance.ActiveTab.CurrentPage, Browser.Instance.ActiveTab.Title);
         }
     }
 }

@@ -10,10 +10,9 @@ using System.Windows.Forms;
 //If favourites is empty the close button does not appear
 //Don't think css is working - test on simple example on uni server
 //If favourite is added while window open, it will not be added to the window
+//back messes up sometimes
 //TODO essential features
-//menus
-//home page
-//make nicer - less buttons
+//editing 
 //TODO extra features
 //unit tests
 //Tidy/abstract more code - more classes
@@ -44,8 +43,8 @@ namespace WebBrowser
     [Serializable]
     public abstract class SavedUrl
     {
-        public WebPageReference WebPage { get; }
-        public string Title { get; }
+        public WebPageReference WebPage { get; protected set; }
+        public string Title { get; protected set; }
 
         protected SavedUrl(WebPageReference page, string title) {
             WebPage = page;
@@ -53,41 +52,79 @@ namespace WebBrowser
         }
     }
 
+    [Serializable]
+    public class HomePage : SavedUrl
+    {
+        private HomePage(WebPageReference page, string title) : base(page, title)
+        { }
+
+        private static HomePage _homePage;
+        private static DataStorer<HomePage> _dataStorer;
+
+        public static HomePage LoadHomePage(string fileLocation) {
+            if (_homePage == null) {
+                _dataStorer = new DataStorer<HomePage>(fileLocation);
+                _homePage = _dataStorer.LoadData();
+            }
+            return _homePage;
+        }
+
+        public static HomePage CreateHomePage(WebPageReference page, string title)
+        {
+            _homePage = new HomePage(page, title);
+            _dataStorer.SetNewItem(_homePage);
+            _dataStorer.SaveData();
+            return _homePage;
+        }
+
+        public void SetHomePage(WebPageReference page, string title) {
+            WebPage = page;
+            Title = title;
+            _dataStorer.SaveData();
+        }
+    }
+
     public class DataStorer<T>
     {
-        public List<T> Items { get; private set; }
+        public T Item { get; private set; }
         private readonly string _fileLocation;
 
         public DataStorer(string fileLocation) {
             _fileLocation = fileLocation;
         }
 
-        public List<T> LoadData() {
+        public T LoadData() {
             try {
                 TryLoadData();
             }
             catch (FileNotFoundException) {
-                Items = new List<T>();
+                return default(T);
             }
             catch (SerializationException) {
                 Console.WriteLine("Failed to load data of type {0}", typeof(T));
-                Items = new List<T>();
+                return default(T);
             }
-            return Items;
+            return Item;
         }
 
         private void TryLoadData() {
             using (Stream stream = File.Open(_fileLocation, FileMode.Open)) {
                 var formatter = new BinaryFormatter();
-                Items = (List<T>) formatter.Deserialize(stream);
+                Item = (T) formatter.Deserialize(stream);
             }
         }
 
         public void SaveData() {
             using (Stream stream = File.Open(_fileLocation, FileMode.Create)) {
                 var formatter = new BinaryFormatter();
-                formatter.Serialize(stream, Items);
+                formatter.Serialize(stream, Item);
             }
+        }
+
+        public void SetNewItem(T item)
+        {
+            Item = item;
+            SaveData();
         }
     }
 
@@ -98,13 +135,15 @@ namespace WebBrowser
                 "BrowserBookmarks.dat");
 
         public List<Bookmark> BookmarkList { get; }
-        private readonly DataStorer<Bookmark> _dataStorer;
+        private readonly DataStorer<List<Bookmark>> _dataStorer;
         private static Bookmarks _instance;
         public static Bookmarks Instance => _instance ?? (_instance = new Bookmarks());
 
         private Bookmarks() {
-            _dataStorer = new DataStorer<Bookmark>(_bookmarksFileLocation);
+            _dataStorer = new DataStorer<List<Bookmark>>(_bookmarksFileLocation);
             BookmarkList = _dataStorer.LoadData();
+            if (BookmarkList == null)
+                _dataStorer.SetNewItem(new List<Bookmark>());
         }
 
         public void AddBookmark(Bookmark bookmark) {
@@ -142,12 +181,14 @@ namespace WebBrowser
 
         public List<HistoryItem> HistoryItems { get; }
         private static GlobalHistory _globalHistory;
-        private readonly DataStorer<HistoryItem> _dataStorer;
+        private readonly DataStorer<List<HistoryItem>> _dataStorer;
         public static GlobalHistory Instance => _globalHistory ?? (_globalHistory = new GlobalHistory());
 
         private GlobalHistory() {
-            _dataStorer = new DataStorer<HistoryItem>(_historyFileLocation);
+            _dataStorer = new DataStorer<List<HistoryItem>>(_historyFileLocation);
             HistoryItems = _dataStorer.LoadData();
+            if (HistoryItems == null)
+                _dataStorer.SetNewItem(new List<HistoryItem>());
         }
 
         public void Add(HistoryItem item) {

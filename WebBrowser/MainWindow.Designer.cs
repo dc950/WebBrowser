@@ -52,6 +52,7 @@ namespace WebBrowser
             this.favouritesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toggleSourceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.homeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setCurrentPageAsHomeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.TabPanel.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel1.SuspendLayout();
@@ -231,7 +232,7 @@ namespace WebBrowser
             this.optionsToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(823, 3);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(69, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(161, 24);
             this.menuStrip1.TabIndex = 13;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -243,7 +244,8 @@ namespace WebBrowser
             this.historyToolStripMenuItem,
             this.favouritesToolStripMenuItem,
             this.toggleSourceToolStripMenuItem,
-            this.homeToolStripMenuItem});
+            this.homeToolStripMenuItem,
+            this.setCurrentPageAsHomeToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "Options";
@@ -251,44 +253,51 @@ namespace WebBrowser
             // backToolStripMenuItem
             // 
             this.backToolStripMenuItem.Name = "backToolStripMenuItem";
-            this.backToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.backToolStripMenuItem.Size = new System.Drawing.Size(212, 22);
             this.backToolStripMenuItem.Text = "Back";
             this.backToolStripMenuItem.Click += new System.EventHandler(this.backToolStripMenuItem_Click);
             // 
             // forwardsToolStripMenuItem
             // 
             this.forwardsToolStripMenuItem.Name = "forwardsToolStripMenuItem";
-            this.forwardsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.forwardsToolStripMenuItem.Size = new System.Drawing.Size(212, 22);
             this.forwardsToolStripMenuItem.Text = "Forwards";
             this.forwardsToolStripMenuItem.Click += new System.EventHandler(this.forwardsToolStripMenuItem_Click);
             // 
             // historyToolStripMenuItem
             // 
             this.historyToolStripMenuItem.Name = "historyToolStripMenuItem";
-            this.historyToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.historyToolStripMenuItem.Size = new System.Drawing.Size(212, 22);
             this.historyToolStripMenuItem.Text = "History";
             this.historyToolStripMenuItem.Click += new System.EventHandler(this.historyToolStripMenuItem_Click);
             // 
             // favouritesToolStripMenuItem
             // 
             this.favouritesToolStripMenuItem.Name = "favouritesToolStripMenuItem";
-            this.favouritesToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.favouritesToolStripMenuItem.Size = new System.Drawing.Size(212, 22);
             this.favouritesToolStripMenuItem.Text = "Favourites";
             this.favouritesToolStripMenuItem.Click += new System.EventHandler(this.favouritesToolStripMenuItem_Click);
             // 
             // toggleSourceToolStripMenuItem
             // 
             this.toggleSourceToolStripMenuItem.Name = "toggleSourceToolStripMenuItem";
-            this.toggleSourceToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.toggleSourceToolStripMenuItem.Size = new System.Drawing.Size(212, 22);
             this.toggleSourceToolStripMenuItem.Text = "Toggle Source";
             this.toggleSourceToolStripMenuItem.Click += new System.EventHandler(this.toggleSourceToolStripMenuItem_Click);
             // 
             // homeToolStripMenuItem
             // 
             this.homeToolStripMenuItem.Name = "homeToolStripMenuItem";
-            this.homeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.homeToolStripMenuItem.Size = new System.Drawing.Size(212, 22);
             this.homeToolStripMenuItem.Text = "Home";
             this.homeToolStripMenuItem.Click += new System.EventHandler(this.homeToolStripMenuItem_Click);
+            // 
+            // setCurrentPageAsHomeToolStripMenuItem
+            // 
+            this.setCurrentPageAsHomeToolStripMenuItem.Name = "setCurrentPageAsHomeToolStripMenuItem";
+            this.setCurrentPageAsHomeToolStripMenuItem.Size = new System.Drawing.Size(212, 22);
+            this.setCurrentPageAsHomeToolStripMenuItem.Text = "Set Current Page as Home";
+            this.setCurrentPageAsHomeToolStripMenuItem.Click += new System.EventHandler(this.setCurrentPageAsHomeToolStripMenuItem_Click);
             // 
             // MainWindow
             // 
@@ -333,5 +342,6 @@ namespace WebBrowser
         private ToolStripMenuItem favouritesToolStripMenuItem;
         private ToolStripMenuItem toggleSourceToolStripMenuItem;
         private ToolStripMenuItem homeToolStripMenuItem;
+        private ToolStripMenuItem setCurrentPageAsHomeToolStripMenuItem;
     }
 }
