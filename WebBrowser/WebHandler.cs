@@ -5,20 +5,20 @@ using System.Threading;
 
 namespace WebBrowser
 {
-    public class WebPageLoader
+    public class WebHandler
     {
         public delegate void ActivateContent(string content, WebPageReference webPage);
 
         //contentActivator is so different things can be done after finshing e.g. update history correctly, handle output as css etc.
         private readonly ActivateContent _contentActivator;
 
-        private WebPageLoader(ActivateContent contentActivator) {
+        private WebHandler(ActivateContent contentActivator) {
             _contentActivator = contentActivator;
         }
 
         public static void LoadPage(WebPageReference webPage, ActivateContent del) {
             Browser.Instance.MainWindow.SetUrlBar(webPage);
-            var webPageLoader = new WebPageLoader(del);
+            var webPageLoader = new WebHandler(del);
             ThreadStart loadPageThreadStart = delegate { webPageLoader.LoadPageThread(webPage); };
             var thread = new Thread(loadPageThreadStart);
             thread.Start();
@@ -34,7 +34,7 @@ namespace WebBrowser
             _contentActivator(content, webPage);
         }
 
-        public void LoadPageThread(WebPageReference webPage) {
+        private void LoadPageThread(WebPageReference webPage) {
             try {
                 TryLoadPageThread(webPage);
             }

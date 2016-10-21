@@ -1,8 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using TheArtOfDev.HtmlRenderer.WinForms;
 
@@ -87,10 +84,6 @@ namespace WebBrowser
                 _htmlSet = true;
                 _htmlPanel.Text = _content;
             }
-        }
-
-        public void SetCss(string css) {
-            _htmlPanel.BaseStylesheet = css;
         }
 
         public void ChangeMode(MainPanelManager.DisplayPanelMode mode) {

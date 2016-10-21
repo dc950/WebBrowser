@@ -1,0 +1,45 @@
+\contentsline {chapter}{\numberline {1}Introduction}{3}
+\contentsline {section}{\numberline {1.1}Report Summary}{3}
+\contentsline {section}{\numberline {1.2}Assumptions}{3}
+\contentsline {chapter}{\numberline {2}Requirements' Checklist}{4}
+\contentsline {chapter}{\numberline {3}Design Considerations}{5}
+\contentsline {section}{\numberline {3.1}Overall Class Design}{5}
+\contentsline {section}{\numberline {3.2}The Browser}{5}
+\contentsline {section}{\numberline {3.3}The Main Window}{6}
+\contentsline {section}{\numberline {3.4}Tabs}{6}
+\contentsline {section}{\numberline {3.5}Web Handler}{6}
+\contentsline {section}{\numberline {3.6}Main Panel}{6}
+\contentsline {section}{\numberline {3.7}History, Favourites and Home}{7}
+\contentsline {subsection}{\numberline {3.7.1}Storable Item Hierarchy}{7}
+\contentsline {subsection}{\numberline {3.7.2}Storable Collection}{8}
+\contentsline {subsection}{\numberline {3.7.3}Data Storage}{8}
+\contentsline {subsection}{\numberline {3.7.4}The Side Panel}{8}
+\contentsline {subsection}{\numberline {3.7.5}Home}{8}
+\contentsline {section}{\numberline {3.8}Other Remarks}{9}
+\contentsline {chapter}{\numberline {4}User Guide}{10}
+\contentsline {section}{\numberline {4.1}Loading A WebPage}{10}
+\contentsline {section}{\numberline {4.2}Navigating Back and Forwards}{10}
+\contentsline {section}{\numberline {4.3}Saving Favourites}{10}
+\contentsline {section}{\numberline {4.4}Accessing Favourites and History}{10}
+\contentsline {section}{\numberline {4.5}Setting The Home Page}{11}
+\contentsline {section}{\numberline {4.6}Tabs}{11}
+\contentsline {section}{\numberline {4.7}Viewing The Source Code}{11}
+\contentsline {section}{\numberline {4.8}Keyboard Shortcuts}{11}
+\contentsline {chapter}{\numberline {5}Developer Guide}{12}
+\contentsline {section}{\numberline {5.1}The Browser}{12}
+\contentsline {section}{\numberline {5.2}Tabs}{12}
+\contentsline {section}{\numberline {5.3}Web Requests}{13}
+\contentsline {section}{\numberline {5.4}Data Storage}{13}
+\contentsline {section}{\numberline {5.5}Side Panel}{13}
+\contentsline {section}{\numberline {5.6}Main Panel}{14}
+\contentsline {section}{\numberline {5.7}Main Window}{14}
+\contentsline {chapter}{\numberline {6}Testing}{15}
+\contentsline {chapter}{\numberline {7}Conclusion}{17}
+\contentsline {chapter}{\numberline {8}Appendix}{18}
+\contentsline {section}{\numberline {8.1}Screenshots}{18}
+\contentsline {subsection}{\numberline {8.1.1}Main Browser}{18}
+\contentsline {subsection}{\numberline {8.1.2}History Panel}{19}
+\contentsline {subsection}{\numberline {8.1.3}Favourites Panel}{19}
+\contentsline {subsection}{\numberline {8.1.4}Editing Favourites}{20}
+\contentsline {subsection}{\numberline {8.1.5}Showing Source}{20}
+\contentsline {subsection}{\numberline {8.1.6}Options}{21}
